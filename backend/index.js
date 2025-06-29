@@ -3,12 +3,19 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 
+// --- Import our new routes ---
+const musicRoutes = require('./routes/music');
+
 // Create an Express application
 const app = express();
 
 // Use middleware
 app.use(cors()); // Enable Cross-Origin Resource Sharing
 app.use(express.json()); // Allow the server to parse JSON in request bodies
+
+// --- Use our new routes under the /api path ---
+app.use('/api', musicRoutes);
+
 
 // Define a simple root route for testing
 app.get('/', (req, res) => {
