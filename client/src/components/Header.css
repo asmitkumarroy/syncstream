@@ -51,3 +51,18 @@
 .header-auth-buttons .logout-button:hover {
   transform: scale(1.05);
 }
+
+/* ... add this class to your existing Header.css ... */
+.party-button {
+  background-color: #535353;
+  color: #fff;
+  border: none;
+  padding: 8px 24px;
+  border-radius: 20px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+.party-button:hover {
+  background-color: #757575;
+}

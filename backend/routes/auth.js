@@ -1,6 +1,7 @@
 const router = require('express').Router();
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
+const { protect } = require('../middleware/authMiddleware');
 
 // Helper function to sign a token
 const signToken = (id) => {
@@ -68,5 +69,15 @@ router.post('/login', async (req, res) => {
     res.status(500).send('Server error');
   }
 });
+
+// --- ADD THIS NEW ROUTE AT THE BOTTOM ---
+// @route   GET /api/auth/me
+// @desc    Get the logged in user's data
+// @access  Private
+router.get('/me', protect, async (req, res) => {
+    // The protect middleware already fetched the user and attached it to req.user
+    res.status(200).json(req.user);
+});
+
 
 module.exports = router;
