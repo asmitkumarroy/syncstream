@@ -1,91 +1,151 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import './App.css';
+import { PlayIcon, PauseIcon, NextIcon, PrevIcon } from './icons';
 
 function App() {
-  // State variables to hold our data
   const [searchTerm, setSearchTerm] = useState('');
   const [songs, setSongs] = useState([]);
-  const [currentSong, setCurrentSong] = useState(null);
+  const [currentSongIndex, setCurrentSongIndex] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const audioRef = useRef(null); // Reference to the audio player element
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [duration, setDuration] = useState(0);
 
-  // Function to handle the search form submission
+  const audioRef = useRef(null);
+  const currentSong = currentSongIndex !== null ? songs[currentSongIndex] : null;
+
+  useEffect(() => {
+    if (!audioRef.current) return;
+    if (isPlaying) {
+      audioRef.current.play().catch(e => console.error("Play error:", e));
+    } else {
+      audioRef.current.pause();
+    }
+  }, [isPlaying, currentSong]);
+
   const handleSearch = async (event) => {
-    event.preventDefault(); // Prevent the form from reloading the page
+    event.preventDefault();
     setIsLoading(true);
-    setSongs([]); // Clear previous results
-
+    setSongs([]);
+    setCurrentSongIndex(null);
     try {
-      // Make a GET request to our backend search API
       const response = await axios.get(`http://localhost:5001/api/search?q=${searchTerm}`);
-      setSongs(response.data); // Update the songs state with the results
+      setSongs(response.data);
     } catch (error) {
       console.error('Error fetching search results:', error);
       alert('Failed to fetch search results.');
-    } finally {
-      setIsLoading(false);
+    }
+    setIsLoading(false);
+  };
+
+  const handleSongClick = (index) => {
+    setCurrentSongIndex(index);
+    setIsPlaying(true);
+  };
+
+  const handlePlayPause = () => {
+    if (!currentSong) return;
+    setIsPlaying(!isPlaying);
+  };
+
+  const handleNextSong = () => {
+    if (currentSongIndex < songs.length - 1) {
+      setCurrentSongIndex(currentSongIndex + 1);
+      setIsPlaying(true);
     }
   };
 
-  // Function to handle clicking on a song in the list
-  const handleSongClick = (song) => {
-    setCurrentSong(song);
+  const handlePreviousSong = () => {
+    if (currentSongIndex > 0) {
+      setCurrentSongIndex(currentSongIndex - 1);
+      setIsPlaying(true);
+    }
+  };
+
+  const handleTimeUpdate = () => {
+    setProgress(audioRef.current.currentTime);
+  };
+
+  const handleLoadedMetadata = () => {
+    setDuration(audioRef.current.duration);
+  };
+  
+  const handleSeek = (e) => {
+    audioRef.current.currentTime = e.target.value;
+    setProgress(e.target.value);
+  };
+
+  const formatTime = (time) => {
+    if (isNaN(time)) return '0:00';
+    const minutes = Math.floor(time / 60);
+    const seconds = Math.floor(time % 60);
+    return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
   };
 
   return (
-    <div className="App">
-      <header className="App-header">
-        <h1>SyncStream</h1>
-        <p>Stream YouTube audio, create shared listening parties.</p>
-      </header>
+    <div className="app-container">
+      <audio
+        ref={audioRef}
+        src={currentSong ? `http://localhost:5001/api/stream/${currentSong.id}` : ''}
+        onTimeUpdate={handleTimeUpdate}
+        onLoadedMetadata={handleLoadedMetadata}
+        onEnded={handleNextSong}
+      />
+      <div className="main-content">
+        <header className="app-header">
+          <h1>SyncStream</h1>
+          <form onSubmit={handleSearch} className="search-form">
+            <input type="text" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Search for artists, songs, or podcasts..." required />
+            <button type="submit" disabled={isLoading}>{isLoading ? '...' : 'Search'}</button>
+          </form>
+        </header>
 
-      <main>
-        {/* Search Form */}
-        <form onSubmit={handleSearch} className="search-form">
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search for a song..."
-            required
-          />
-          <button type="submit" disabled={isLoading}>
-            {isLoading ? 'Searching...' : 'Search'}
-          </button>
-        </form>
-
-        {/* Search Results */}
-        <div className="search-results">
-          {songs.map((song) => (
-            <div
-              key={song.id}
-              className={`song-item ${currentSong?.id === song.id ? 'active' : ''}`}
-              onClick={() => handleSongClick(song)}
-            >
-              <img src={song.thumbnail} alt={song.title} className="song-thumbnail" />
-              <div className="song-details">
-                <p className="song-title">{song.title}</p>
-                <p className="song-duration">{song.duration}</p>
+        <div className="results-grid">
+          {songs.map((song, index) => (
+            <div className="song-card" key={song.id} onClick={() => handleSongClick(index)}>
+              <div className="thumbnail-container">
+                <img src={song.thumbnail} alt={song.title} />
+                <div className="play-icon-overlay">
+                  <PlayIcon />
+                </div>
               </div>
+              <p className="song-title">{song.title}</p>
+              <p className="song-duration">{song.duration}</p>
             </div>
           ))}
         </div>
-      </main>
+      </div>
 
-      {/* Audio Player - only shows when a song is selected */}
       {currentSong && (
-        <footer className="audio-player">
-          <p>Now Playing: <strong>{currentSong.title}</strong></p>
-          <audio
-            ref={audioRef}
-            controls
-            autoPlay
-            src={`http://localhost:5001/api/stream/${currentSong.id}`}
-            onError={(e) => console.error('Audio Player Error:', e)}
-          >
-            Your browser does not support the audio element.
-          </audio>
+        <footer className="player-footer">
+          <div className="song-info">
+            <img src={currentSong.thumbnail} alt={currentSong.title} />
+            <div>
+              <p className="title">{currentSong.title}</p>
+              <p className="artist">SyncStream</p>
+            </div>
+          </div>
+          
+          {/* CORRECTED STRUCTURE: Wrapper div for center column */}
+          <div className="player-center">
+            <div className="control-buttons">
+              <button onClick={handlePreviousSong} disabled={currentSongIndex === 0}><PrevIcon /></button>
+              <button onClick={handlePlayPause} className="play-pause-btn">
+                {isPlaying ? <PauseIcon /> : <PlayIcon />}
+              </button>
+              <button onClick={handleNextSong} disabled={currentSongIndex === songs.length - 1}><NextIcon /></button>
+            </div>
+            <div className="seek-bar-container">
+              <span>{formatTime(progress)}</span>
+              <input type="range" min="0" max={duration || 0} value={progress} onChange={handleSeek} className="seek-bar" />
+              <span>{formatTime(duration)}</span>
+            </div>
+          </div>
+          
+          <div className="player-right">
+            {/* Volume controls can go here in the future */}
+          </div>
         </footer>
       )}
     </div>
