@@ -8,6 +8,7 @@ import LikedSongsPage from './pages/LikedSongsPage';
 import Sidebar from './components/Sidebar';
 import Player from './components/Player';
 import Header from './components/Header';
+import RoomPage from './pages/RoomPage';
 import './App.css';
 
 function App() {
@@ -18,6 +19,7 @@ function App() {
         <main className="main-view">
           <Header />
           <Routes>
+            <Route path="/room/:id" element={<RoomPage />} />
             <Route path="/" element={<HomePage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
