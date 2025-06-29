@@ -6,7 +6,8 @@ require('dotenv').config();
 // Import routes
 const musicRoutes = require('./routes/music');
 const authRoutes = require('./routes/auth');
-const playlistRoutes = require('./routes/playlists'); // 1. Import playlist routes
+const playlistRoutes = require('./routes/playlists');
+const userRoutes = require('./routes/user'); // 1. Import user routes
 
 const connectDB = async () => {
   //... (no changes here)
@@ -15,7 +16,7 @@ const connectDB = async () => {
     console.log('MongoDB Connected...');
   } catch (err) {
     console.error(err.message);
-    process.exit(1); // Exit process with failure
+    process.exit(1);
   }
 };
 connectDB();
@@ -27,7 +28,8 @@ app.use(express.json());
 // Use Routes
 app.use('/api', musicRoutes);
 app.use('/api/auth', authRoutes);
-app.use('/api/playlists', playlistRoutes); // 2. Use playlist routes
+app.use('/api/playlists', playlistRoutes);
+app.use('/api/user', userRoutes); // 2. Use user routes
 
 const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => console.log(`Server is listening on port ${PORT}`));

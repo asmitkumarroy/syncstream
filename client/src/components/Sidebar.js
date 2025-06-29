@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { Link, NavLink } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import useAxios from '../hooks/useAxios';
 import './Sidebar.css';
-import { HomeIcon, SearchIcon, LibraryIcon, PlusIcon, HeartIcon } from '../icons'; // We will add these
+import { HomeIcon, SearchIcon, LibraryIcon, HeartIcon, PlusIcon } from '../icons';
 
 const Sidebar = () => {
   const [playlists, setPlaylists] = useState([]);
@@ -11,7 +11,7 @@ const Sidebar = () => {
   const api = useAxios();
 
   useEffect(() => {
-    // Fetch playlists only if the user is logged in
+    // Fetch playlists only if the user is authenticated
     if (isAuthenticated) {
       const fetchPlaylists = async () => {
         try {
@@ -23,7 +23,8 @@ const Sidebar = () => {
       };
       fetchPlaylists();
     } else {
-      setPlaylists([]); // Clear playlists on logout
+      // Clear playlists on logout
+      setPlaylists([]);
     }
   }, [isAuthenticated, api]);
 
@@ -34,29 +35,46 @@ const Sidebar = () => {
           <HomeIcon />
           <span>Home</span>
         </NavLink>
-        {/* We can link this to a future search page */}
         <NavLink to="/" className="nav-item">
           <SearchIcon />
           <span>Search</span>
         </NavLink>
       </div>
+
       <div className="sidebar-library">
         <div className="library-header">
           <LibraryIcon />
           <span>Your Library</span>
+          {/* This button can be wired up to the create playlist modal in the future */}
           <button className="add-playlist-btn"><PlusIcon /></button>
         </div>
+
         <div className="library-items">
-          {/* We will add a "Liked Songs" link here later */}
-          {playlists.map(playlist => (
-            <Link to={`/playlists/${playlist._id}`} key={playlist._id} className="library-item">
-              <div className="playlist-art-sm">🎵</div>
-              <div className="playlist-info-sm">
-                <span className="playlist-name-sm">{playlist.name}</span>
-                <span className="playlist-meta-sm">Playlist</span>
-              </div>
-            </Link>
-          ))}
+          {isAuthenticated && (
+            <>
+              {/* Liked Songs Link */}
+              <NavLink to="/collection/tracks" className="library-item">
+                <div className="playlist-art-sm liked-songs-art">
+                    <HeartIcon />
+                </div>
+                <div className="playlist-info-sm">
+                    <span className="playlist-name-sm">Liked Songs</span>
+                    <span className="playlist-meta-sm">Playlist</span> 
+                </div>
+              </NavLink>
+
+              {/* User's Created Playlists */}
+              {playlists.map(playlist => (
+                <NavLink to={`/playlists/${playlist._id}`} key={playlist._id} className="library-item">
+                  <div className="playlist-art-sm">🎵</div>
+                  <div className="playlist-info-sm">
+                    <span className="playlist-name-sm">{playlist.name}</span>
+                    <span className="playlist-meta-sm">Playlist • {playlist.songs.length} songs</span>
+                  </div>
+                </NavLink>
+              ))}
+            </>
+          )}
         </div>
       </div>
     </div>

@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
+const SongSchema = require('./SongSchema'); // 1. Import the reusable schema
 
 const UserSchema = new mongoose.Schema({
   username: {
@@ -11,33 +12,28 @@ const UserSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Please provide an email'],
     unique: true,
-    match: [
-      /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/,
-      'Please provide a valid email',
-    ],
+    match: [ /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/, 'Please provide a valid email' ],
   },
   password: {
     type: String,
     required: [true, 'Please provide a password'],
     minlength: 6,
   },
+  // 2. NEW: Add the likedSongs array using our SongSchema
+  likedSongs: [SongSchema],
 });
 
-// This function will run BEFORE a new user is saved to the database
+// ... (the rest of the file, pre-save hook and matchPassword method, remains exactly the same) ...
+
 UserSchema.pre('save', async function (next) {
-  // If the password hasn't been changed, we don't need to re-hash it
   if (!this.isModified('password')) {
     next();
   }
-
-  // Generate a 'salt' to add to the password for extra security
   const salt = await bcrypt.genSalt(10);
-  // Hash the password with the salt
   this.password = await bcrypt.hash(this.password, salt);
   next();
 });
 
-// A helper method to compare entered password with the hashed password
 UserSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };

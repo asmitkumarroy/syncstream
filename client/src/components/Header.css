@@ -1,0 +1,53 @@
+.top-bar-header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 32px;
+  background-color: rgba(18, 18, 18, 0.8);
+  backdrop-filter: blur(5px);
+  height: 64px;
+  box-sizing: border-box;
+}
+
+.header-auth-buttons {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.header-auth-buttons .signup-button {
+  color: #b3b3b3;
+  background-color: transparent;
+  border: none;
+  font-weight: bold;
+  font-size: 1rem;
+  cursor: pointer;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.header-auth-buttons .signup-button:hover {
+  color: #fff;
+}
+
+.header-auth-buttons .login-button,
+.header-auth-buttons .logout-button {
+  background-color: #fff;
+  color: #000;
+  border: none;
+  padding: 8px 24px;
+  border-radius: 20px;
+  font-weight: bold;
+  font-size: 1rem;
+  cursor: pointer;
+  text-decoration: none;
+  transition: transform 0.2s;
+}
+
+.header-auth-buttons .login-button:hover,
+.header-auth-buttons .logout-button:hover {
+  transform: scale(1.05);
+}

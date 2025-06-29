@@ -1,28 +1,73 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, useContext } from 'react';
 import { usePlayer } from '../context/PlayerContext';
-import { PlayIcon, PauseIcon, NextIcon, PrevIcon } from '../icons';
+import { AuthContext } from '../context/AuthContext';
+import { PlayIcon, PauseIcon, NextIcon, PrevIcon, VolumeIcon, HeartIcon, HeartFilledIcon } from '../icons';
 
 const Player = () => {
-  const { currentSong, isPlaying, setIsPlaying, playNext, playPrev, queue } = usePlayer();
+  // From PlayerContext
+  const { 
+    currentSong, 
+    isPlaying, 
+    setIsPlaying, 
+    playNext, 
+    playPrev, 
+    queue, 
+    currentSongIndex, 
+    volume, 
+    setVolume 
+  } = usePlayer();
+  
+  // From AuthContext
+  const { likedSongs, addLikedSong, removeLikedSong } = useContext(AuthContext);
+  
+  // Local state for this component
   const audioRef = useRef(null);
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
-  
+
+  // Check if the currently playing song is in the user's liked songs
+  const isCurrentSongLiked = currentSong ? likedSongs.has(currentSong.videoId || currentSong.id) : false;
+
+  // Effect to handle playing/pausing the audio element
   useEffect(() => {
     if (audioRef.current) {
       if (isPlaying) {
-        audioRef.current.play().catch(e => console.error("Play error:", e));
+        audioRef.current.play().catch(e => console.error("Audio play error:", e));
       } else {
         audioRef.current.pause();
       }
     }
   }, [isPlaying, currentSong]);
 
+  // Effect to handle volume changes
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = volume;
+    }
+  }, [volume]);
+
+
+  // Event Handlers
   const handleTimeUpdate = () => setProgress(audioRef.current?.currentTime || 0);
   const handleLoadedMetadata = () => setDuration(audioRef.current?.duration || 0);
   const handleSeek = (e) => {
-    if (audioRef.current) audioRef.current.currentTime = e.target.value;
+    if (audioRef.current) {
+      audioRef.current.currentTime = e.target.value;
+    }
   };
+
+  const handleLikeClick = () => {
+    if (!currentSong) return;
+    const songId = currentSong.videoId || currentSong.id;
+    if (isCurrentSongLiked) {
+      removeLikedSong(songId);
+    } else {
+      const songData = { id: songId, title: currentSong.title, thumbnail: currentSong.thumbnail, duration: currentSong.duration };
+      addLikedSong(songData);
+    }
+  };
+
+  // Helper function to format time from seconds to MM:SS
   const formatTime = (time) => {
     if (isNaN(time)) return '0:00';
     const minutes = Math.floor(time / 60);
@@ -30,7 +75,10 @@ const Player = () => {
     return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
   };
 
-  if (!currentSong) return null; // Don't render the player if no song is loaded
+  // If there is no song, render nothing.
+  if (!currentSong) {
+    return null;
+  }
 
   return (
     <>
@@ -43,19 +91,29 @@ const Player = () => {
         autoPlay
       />
       <footer className="player-footer">
+        {/* --- Column 1: Song Info --- */}
         <div className="song-info">
           <img src={currentSong.thumbnail} alt={currentSong.title} />
-          <div>
+          <div className="title-wrapper">
             <p className="title">{currentSong.title}</p>
           </div>
+          <button onClick={handleLikeClick} className="control-button like-button">
+            {isCurrentSongLiked ? <HeartFilledIcon /> : <HeartIcon />}
+          </button>
         </div>
+
+        {/* --- Column 2: Player Controls --- */}
         <div className="player-center">
           <div className="control-buttons">
-            <button onClick={playPrev} disabled={queue.length <= 1}><PrevIcon /></button>
+            <button onClick={playPrev} disabled={currentSongIndex === 0}>
+              <PrevIcon />
+            </button>
             <button onClick={() => setIsPlaying(!isPlaying)} className="play-pause-btn">
               {isPlaying ? <PauseIcon /> : <PlayIcon />}
             </button>
-            <button onClick={playNext} disabled={queue.length <= 1}><NextIcon /></button>
+            <button onClick={playNext} disabled={!queue || currentSongIndex === queue.length - 1}>
+              <NextIcon />
+            </button>
           </div>
           <div className="seek-bar-container">
             <span>{formatTime(progress)}</span>
@@ -63,8 +121,21 @@ const Player = () => {
             <span>{formatTime(duration)}</span>
           </div>
         </div>
+
+        {/* --- Column 3: Volume Controls --- */}
         <div className="player-right">
-          {/* Volume slider will go here next! */}
+          <div className="volume-container">
+            <button className="control-button"><VolumeIcon /></button>
+            <input 
+              type="range" 
+              min="0" 
+              max="1" 
+              step="0.01" 
+              value={volume}
+              onChange={(e) => setVolume(parseFloat(e.target.value))}
+              className="volume-slider"
+            />
+          </div>
         </div>
       </footer>
     </>

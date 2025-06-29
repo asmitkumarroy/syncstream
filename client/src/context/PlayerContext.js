@@ -6,6 +6,7 @@ export const PlayerProvider = ({ children }) => {
   const [queue, setQueue] = useState([]);
   const [currentSongIndex, setCurrentSongIndex] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [volume, setVolume] = useState(0.75); // NEW: Add volume state (0 to 1), default to 75%
 
   const currentSong = currentSongIndex !== null ? queue[currentSongIndex] : null;
 
@@ -20,7 +21,6 @@ export const PlayerProvider = ({ children }) => {
       setCurrentSongIndex(currentSongIndex + 1);
       setIsPlaying(true);
     } else {
-      // Optional: stop playing at the end of the queue
       setIsPlaying(false);
     }
   };
@@ -38,6 +38,8 @@ export const PlayerProvider = ({ children }) => {
     currentSong,
     isPlaying,
     setIsPlaying,
+    volume,       // NEW: Provide volume state
+    setVolume,    // NEW: Provide function to update volume
     loadQueue,
     playNext,
     playPrev,

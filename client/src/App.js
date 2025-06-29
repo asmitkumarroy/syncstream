@@ -3,10 +3,11 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
-import MyPlaylistsPage from './pages/MyPlaylistsPage';
 import PlaylistDetailPage from './pages/PlaylistDetailPage';
-import Sidebar from './components/Sidebar'; // Import Sidebar
-import Player from './components/Player'; // We will move the player here
+import LikedSongsPage from './pages/LikedSongsPage';
+import Sidebar from './components/Sidebar';
+import Player from './components/Player';
+import Header from './components/Header';
 import './App.css';
 
 function App() {
@@ -14,15 +15,17 @@ function App() {
     <Router>
       <div className="app-wrapper">
         <Sidebar />
-        <div className="main-view">
+        <main className="main-view">
+          <Header />
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
-            {/* MyPlaylistsPage is now handled by the sidebar, we can remove this route for now */}
+            <Route path="/collection/tracks" element={<LikedSongsPage />} />
             <Route path="/playlists/:id" element={<PlaylistDetailPage />} />
           </Routes>
-        </div>
+        </main>
+        {/* The Player component is now inside the main wrapper */}
         <Player />
       </div>
     </Router>

@@ -1,12 +1,5 @@
 const mongoose = require('mongoose');
-
-// This defines the structure for songs within a playlist
-const SongSchema = new mongoose.Schema({
-  videoId: { type: String, required: true },
-  title: { type: String, required: true },
-  thumbnail: { type: String, required: true },
-  duration: { type: String, required: false },
-});
+const SongSchema = require('./SongSchema'); // 1. Import the reusable schema
 
 const PlaylistSchema = new mongoose.Schema({
   name: {
@@ -18,14 +11,13 @@ const PlaylistSchema = new mongoose.Schema({
     type: String,
     trim: true,
   },
-  // This links the playlist to a specific user
   user: {
     type: mongoose.Schema.ObjectId,
-    ref: 'User', // This refers to our 'User' model
+    ref: 'User',
     required: true,
   },
-  songs: [SongSchema], // A playlist contains an array of songs
-}, { timestamps: true }); // Automatically add createdAt and updatedAt fields
+  songs: [SongSchema], // 2. Use the imported schema here
+}, { timestamps: true });
 
 const Playlist = mongoose.model('Playlist', PlaylistSchema);
 

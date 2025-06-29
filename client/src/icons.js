@@ -40,5 +40,13 @@ export const LibraryIcon = () => (
   <svg role="img" height="24" width="24" viewBox="0 0 24 24"><path fill="currentColor" d="M14.5 2.134a1 1 0 011 0l6 3.464a1 1 0 01.5.866V21a1 1 0 01-1 1h-6a1 1 0 01-1-1V3a1 1 0 01.5-.866zM16 4.732V20h4V7.024l-4-2.292zM3 22a1 1 0 01-1-1V3a1 1 0 012 0v18a1 1 0 01-1 1zm6 0a1 1 0 01-1-1V3a1 1 0 012 0v18a1 1 0 01-1 1z"></path></svg>
 );
 export const HeartIcon = () => (
-  <svg role="img" height="24" width="24" viewBox="0 0 24 24"><path fill="currentColor" d="M5.21 2.21a6.76 6.76 0 019.56 0l1.23 1.23 1.23-1.23a6.76 6.76 0 019.56 9.56l-10.19 10.19a.75.75 0 01-1.06 0l-10.19-10.19a6.76 6.76 0 010-9.56z"></path></svg>
+  <svg role="img" height="24" width="35" viewBox="0 0 24 24"><path fill="currentColor" d="M5.21 2.21a6.76 6.76 0 019.56 0l1.23 1.23 1.23-1.23a6.76 6.76 0 019.56 9.56l-10.19 10.19a.75.75 0 01-1.06 0l-10.19-10.19a6.76 6.76 0 010-9.56z"></path></svg>
+);
+
+export const VolumeIcon = () => (
+    <svg role="presentation" height="16" width="16" viewBox="0 0 16 16" fill="currentColor"><path d="M9.741.85a.75.75 0 01.375.65v13a.75.75 0 01-1.125.65l-6.925-4a3.642 3.642 0 01-1.33-4.967 3.639 3.639 0 011.33-1.332l6.925-4a.75.75 0 01.75 0zm-6.924 5.3a2.139 2.139 0 000 3.7l5.8 3.35V2.8l-5.8 3.35zm8.683 4.29V5.56a2.75 2.75 0 010 4.88z"></path><path d="M11.5 13.614a5.752 5.752 0 000-11.228v1.55a4.252 4.252 0 010 8.128v1.55z"></path></svg>
+);
+
+export const HeartFilledIcon = () => (
+    <svg role="img" height="24" width="35" viewBox="0 0 24 24" fill="#1db954"><path d="M5.21 2.21a6.76 6.76 0 019.56 0l1.23 1.23 1.23-1.23a6.76 6.76 0 019.56 9.56l-10.19 10.19a.75.75 0 01-1.06 0l-10.19-10.19a6.76 6.76 0 010-9.56z"></path></svg>
 );
