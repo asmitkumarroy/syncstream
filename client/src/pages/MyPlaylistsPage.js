@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
+import { Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import useAxios from '../hooks/useAxios';
 import CreatePlaylistModal from '../components/CreatePlaylistModal';
@@ -14,6 +15,7 @@ const MyPlaylistsPage = () => {
   useEffect(() => {
     if (isAuthenticated) {
       const fetchPlaylists = async () => {
+        setIsLoading(true);
         try {
           const { data } = await api.get('/playlists');
           setPlaylists(data);
@@ -44,22 +46,24 @@ const MyPlaylistsPage = () => {
       <div className="playlists-grid">
         {playlists.length > 0 ? (
           playlists.map(playlist => (
-            <div key={playlist._id} className="playlist-card">
-              <div className="playlist-card-art">
-                {/* We can show song thumbnails here later */}
-                <span>🎵</span>
+            <Link to={`/playlists/${playlist._id}`} key={playlist._id} className="playlist-card-link">
+              <div className="playlist-card">
+                <div className="playlist-card-art">
+                  <span>🎵</span>
+                </div>
+                <p className="playlist-name">{playlist.name}</p>
+                <p className="song-count">{playlist.songs.length} songs</p>
               </div>
-              <p className="playlist-name">{playlist.name}</p>
-              <p className="song-count">{playlist.songs.length} songs</p>
-            </div>
+            </Link>
           ))
         ) : (
-          <p>You haven't created any playlists yet.</p>
+          <p>You haven't created any playlists yet. Click the button to create your first one!</p>
         )}
       </div>
       
       {isModalOpen && (
         <CreatePlaylistModal 
+          // TYPO FIX: Changed setIsModalОpen to setIsModalOpen
           onClose={() => setIsModalOpen(false)} 
           onPlaylistCreated={handlePlaylistCreated}
         />

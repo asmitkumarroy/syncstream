@@ -9,7 +9,7 @@ const Navbar = () => {
 
   const handleLogout = () => {
     logout(); // Clear the token and state
-    navigate('/'); // Redirect to homepage
+    navigate('/login'); // Use smooth navigation to the login page
   };
 
   return (
@@ -20,16 +20,13 @@ const Navbar = () => {
         </Link>
         <div className="nav-menu">
           {isAuthenticated ? (
-            // If user is authenticated, show Logout button
             <>
-            <Link to="/playlists" className="nav-links">My Playlists</Link>
-              
+              <Link to="/playlists" className="nav-links">My Playlists</Link>
               <button onClick={handleLogout} className="nav-button">
                 Logout
               </button>
             </>
           ) : (
-            // If not authenticated, show Login and Register links
             <>
               <Link to="/login" className="nav-links">
                 Login

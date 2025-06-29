@@ -80,3 +80,8 @@
   padding: 24px 32px;
   font-size: 1.2rem;
 }
+
+.playlist-card-link {
+    text-decoration: none;
+    color: inherit;
+}
