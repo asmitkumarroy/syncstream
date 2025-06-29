@@ -1,7 +1,5 @@
 const router = require('express').Router();
 const ytdl = require('@distube/ytdl-core');
-// --- NEW LIBRARY ---
-// We are now using 'ytsr' for searching
 const ytsr = require('ytsr');
 
 // --- Search Endpoint ---
@@ -16,19 +14,23 @@ router.get('/search', async (req, res) => {
       return res.status(400).json({ message: 'Search query is required' });
     }
 
-    // Use ytsr to get the first page of search results.
-    // We are filtering for 'video' type results only.
-    const searchResults = await ytsr(q, { limit: 10, type: 'video' });
+    // UPDATED: Use `safe: true` to prevent crashes on unknown item types.
+    // We also fetch more items (limit: 20) to ensure we get enough videos
+    // even if some non-video items are filtered out.
+    const searchResults = await ytsr(q, { safe: true, limit: 20 });
 
     // The ytsr library has a different result structure, so we adapt.
-    // We map over the 'items' array in the results.
-    const formattedResults = searchResults.items.map(video => ({
-      id: video.id,
-      title: video.title,
-      // ytsr provides thumbnails in an array, we take the first one.
-      thumbnail: video.thumbnails[0]?.url, 
-      duration: video.duration,
-    }));
+    // We first filter to ensure we only have items of type 'video'.
+    // Then we slice to take only the first 10 videos.
+    const formattedResults = searchResults.items
+      .filter(item => item.type === 'video')
+      .slice(0, 10)
+      .map(video => ({
+        id: video.id,
+        title: video.title,
+        thumbnail: video.thumbnails[0]?.url,
+        duration: video.duration,
+      }));
 
     res.json(formattedResults);
 
