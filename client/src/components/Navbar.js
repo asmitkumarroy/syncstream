@@ -22,6 +22,8 @@ const Navbar = () => {
           {isAuthenticated ? (
             // If user is authenticated, show Logout button
             <>
+            <Link to="/playlists" className="nav-links">My Playlists</Link>
+              
               <button onClick={handleLogout} className="nav-button">
                 Logout
               </button>

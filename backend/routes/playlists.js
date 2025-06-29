@@ -17,6 +17,7 @@ router.post('/', protect, async (req, res) => {
     });
     res.status(201).json(playlist);
   } catch (error) {
+    console.error(error); // This will log the real error if something goes wrong
     res.status(500).json({ message: 'Server Error' });
   }
 });
@@ -29,6 +30,7 @@ router.get('/', protect, async (req, res) => {
     const playlists = await Playlist.find({ user: req.user._id });
     res.status(200).json(playlists);
   } catch (error) {
+    console.error(error);
     res.status(500).json({ message: 'Server Error' });
   }
 });
@@ -57,6 +59,7 @@ router.post('/:id/songs', protect, async (req, res) => {
 
     res.status(200).json(playlist);
   } catch (error) {
+    console.error(error);
     res.status(500).json({ message: 'Server Error' });
   }
 });

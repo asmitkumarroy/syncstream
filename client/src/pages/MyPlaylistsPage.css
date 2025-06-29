@@ -1,0 +1,82 @@
+.playlists-page-container {
+  padding: 24px 32px;
+  color: #fff;
+}
+
+.playlists-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.playlists-header h1 {
+  font-size: 2rem;
+}
+
+.create-playlist-btn {
+  background-color: #1db954;
+  color: #fff;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  text-decoration: none;
+  font-size: 1rem;
+  font-weight: bold;
+  transition: transform 0.2s;
+}
+
+.create-playlist-btn:hover {
+  transform: scale(1.05);
+}
+
+.playlists-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 24px;
+}
+
+.playlist-card {
+  background-color: #181818;
+  border-radius: 8px;
+  padding: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.playlist-card:hover {
+  background-color: #282828;
+}
+
+.playlist-card-art {
+  width: 100%;
+  padding-bottom: 100%; /* Creates a square aspect ratio */
+  background-color: #282828;
+  border-radius: 6px;
+  margin-bottom: 16px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 3rem;
+  color: #535353;
+}
+
+.playlist-name {
+  font-weight: bold;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin: 0;
+}
+
+.song-count {
+  font-size: 0.9rem;
+  color: #b3b3b3;
+  margin: 4px 0 0 0;
+}
+
+.loading-text {
+  padding: 24px 32px;
+  font-size: 1.2rem;
+}
