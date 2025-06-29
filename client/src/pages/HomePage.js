@@ -1,24 +1,36 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useContext } from 'react';
 import axios from 'axios';
-import '../App.css'; // We'll share the main App.css
-import { PlayIcon, PauseIcon, NextIcon, PrevIcon } from '../icons';
+import '../App.css'; 
+import { PlayIcon, PauseIcon, NextIcon, PrevIcon, PlusIcon } from '../icons'; // Import PlusIcon
+import { AuthContext } from '../context/AuthContext'; // Import AuthContext
+import AddToPlaylistModal from '../components/AddToPlaylistModal'; // Import the new modal
 
-// The function name is now HomePage
 export default function HomePage() { 
-  // All the state and functions you had in App.js are here
+  // ... all the existing state variables ...
   const [searchTerm, setSearchTerm] = useState('');
-  // ... and so on
   const [songs, setSongs] = useState([]);
   const [currentSongIndex, setCurrentSongIndex] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
+  
+  // NEW: State for the "Add to Playlist" modal
+  const [isAddToPlaylistModalOpen, setIsAddToPlaylistModalOpen] = useState(false);
+  const [selectedSong, setSelectedSong] = useState(null);
 
+  const { isAuthenticated } = useContext(AuthContext); // Check if user is logged in
   const audioRef = useRef(null);
   const currentSong = currentSongIndex !== null ? songs[currentSongIndex] : null;
 
-   useEffect(() => {
+  // NEW: Function to open the modal
+  const handleOpenAddToPlaylistModal = (song) => {
+    setSelectedSong(song);
+    setIsAddToPlaylistModalOpen(true);
+  };
+
+  // ... all other existing functions (useEffect, handleSearch, etc.) remain the same ...
+  useEffect(() => {
     if (!audioRef.current) return;
     if (isPlaying) {
       audioRef.current.play().catch(e => console.error("Play error:", e));
@@ -86,9 +98,9 @@ export default function HomePage() {
     return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
   };
 
-  // The entire return (...) JSX from your old App.js goes here
   return (
      <div className="app-container">
+      {/* ... audio element remains the same ... */}
       <audio
         ref={audioRef}
         src={currentSong ? `http://localhost:5001/api/stream/${currentSong.id}` : ''}
@@ -97,6 +109,7 @@ export default function HomePage() {
         onEnded={handleNextSong}
       />
       <div className="main-content">
+        {/* ... header remains the same ... */}
         <header className="app-header">
           <h1>SyncStream</h1>
           <form onSubmit={handleSearch} className="search-form">
@@ -107,21 +120,29 @@ export default function HomePage() {
 
         <div className="results-grid">
           {songs.map((song, index) => (
-            <div className="song-card" key={song.id} onClick={() => handleSongClick(index)}>
-              <div className="thumbnail-container">
-                <img src={song.thumbnail} alt={song.title} />
-                <div className="play-icon-overlay">
-                  <PlayIcon />
+            <div className="song-card" key={song.id}>
+              {/* This part of the card now handles playing the song */}
+              <div className="clickable-area" onClick={() => handleSongClick(index)}>
+                <div className="thumbnail-container">
+                  <img src={song.thumbnail} alt={song.title} />
+                  <div className="play-icon-overlay"><PlayIcon /></div>
                 </div>
+                <p className="song-title">{song.title}</p>
+                <p className="song-duration">{song.duration}</p>
               </div>
-              <p className="song-title">{song.title}</p>
-              <p className="song-duration">{song.duration}</p>
+              {/* NEW: Add to Playlist button, only shown if logged in */}
+              {isAuthenticated && (
+                <button className="add-to-playlist-btn" onClick={() => handleOpenAddToPlaylistModal(song)}>
+                  <PlusIcon />
+                </button>
+              )}
             </div>
           ))}
         </div>
       </div>
 
-      {currentSong && (
+      {/* ... player footer remains the same ... */}
+       {currentSong && (
         <footer className="player-footer">
           <div className="song-info">
             <img src={currentSong.thumbnail} alt={currentSong.title} />
@@ -130,8 +151,6 @@ export default function HomePage() {
               <p className="artist">SyncStream</p>
             </div>
           </div>
-          
-          {/* CORRECTED STRUCTURE: Wrapper div for center column */}
           <div className="player-center">
             <div className="control-buttons">
               <button onClick={handlePreviousSong} disabled={currentSongIndex === 0}><PrevIcon /></button>
@@ -146,11 +165,16 @@ export default function HomePage() {
               <span>{formatTime(duration)}</span>
             </div>
           </div>
-          
-          <div className="player-right">
-            {/* Volume controls can go here in the future */}
-          </div>
+          <div className="player-right"></div>
         </footer>
+      )}
+
+      {/* NEW: Conditionally render the "Add to Playlist" modal */}
+      {isAddToPlaylistModalOpen && (
+        <AddToPlaylistModal
+          song={selectedSong}
+          onClose={() => setIsAddToPlaylistModalOpen(false)}
+        />
       )}
     </div>
   );

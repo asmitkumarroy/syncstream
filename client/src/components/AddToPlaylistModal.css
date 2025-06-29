@@ -1,0 +1,34 @@
+/* We can reuse modal styles, but add specifics */
+.add-to-playlist-modal {
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.playlists-selection-list {
+    overflow-y: auto;
+    margin-top: 15px;
+    padding-right: 10px; /* For scrollbar */
+}
+
+.playlist-selection-item {
+    padding: 15px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    border-bottom: 1px solid #3a3a3a;
+}
+
+.playlist-selection-item:hover {
+    background-color: #3a3a3a;
+}
+
+.playlist-selection-item:last-child {
+    border-bottom: none;
+}
+
+.feedback-text {
+    text-align: center;
+    font-weight: bold;
+    color: #1db954;
+}

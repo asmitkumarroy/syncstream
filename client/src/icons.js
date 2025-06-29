@@ -23,3 +23,9 @@ export const PrevIcon = () => (
     <path fill="currentColor" d="M13 2.5L5 7.119V3H3v10h2V8.881l8 4.619z"></path>
   </svg>
 );
+
+export const PlusIcon = () => (
+    <svg role="img" height="24" width="24" viewBox="0 0 24 24">
+        <path fill="currentColor" d="M11 11V3h2v8h8v2h-8v8h-2v-8H3v-2h8z"></path>
+    </svg>
+);
