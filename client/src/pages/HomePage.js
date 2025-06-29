@@ -3,7 +3,7 @@ import axios from 'axios';
 import '../App.css';
 import { PlayIcon, PlusIcon } from '../icons';
 import { AuthContext } from '../context/AuthContext';
-import { usePlayer } from '../context/PlayerContext'; // Import the player context hook
+import { usePlayer } from '../context/PlayerContext';
 import AddToPlaylistModal from '../components/AddToPlaylistModal';
 
 export default function HomePage() { 
@@ -14,7 +14,7 @@ export default function HomePage() {
   const [selectedSong, setSelectedSong] = useState(null);
   
   const { isAuthenticated } = useContext(AuthContext);
-  const { loadQueue } = usePlayer(); // Get the function to load the player
+  const { loadQueue } = usePlayer();
 
   const handleSearch = async (event) => {
     event.preventDefault();
@@ -24,7 +24,6 @@ export default function HomePage() {
       const response = await axios.get(`http://localhost:5001/api/search?q=${searchTerm}`);
       setSongs(response.data);
     } catch (error) {
-      console.error('Error fetching search results:', error);
       alert('Failed to fetch search results.');
     }
     setIsLoading(false);
@@ -36,17 +35,16 @@ export default function HomePage() {
   };
   
   const handlePlayFromSearch = (index) => {
-      // Load the search results into the global player queue
       loadQueue(songs, index);
   };
 
   return (
-     <div className="app-container-placeholder"> {/* This placeholder avoids duplicate layout styles */}
-      <header className="app-header">
-        <h1>SyncStream</h1>
+    // Note: The main layout div is gone, as it's now in App.js
+    <>
+      <header className="page-header">
+        <h1>Welcome Back</h1>
         <form onSubmit={handleSearch} className="search-form">
-          <input type="text" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Search for artists, songs, or podcasts..." required />
-          <button type="submit" disabled={isLoading}>{isLoading ? '...' : 'Search'}</button>
+          <input type="text" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="What do you want to play?" required />
         </form>
       </header>
 
@@ -68,6 +66,6 @@ export default function HomePage() {
       {isAddToPlaylistModalOpen && (
         <AddToPlaylistModal song={selectedSong} onClose={() => setIsAddToPlaylistModalOpen(false)} />
       )}
-    </div>
+    </>
   );
 }
