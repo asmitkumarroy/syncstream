@@ -1,31 +1,31 @@
-// Import required packages
 const express = require('express');
 const cors = require('cors');
+const mongoose = require('mongoose');
 require('dotenv').config();
 
-// --- Import our new routes ---
+// Import routes
 const musicRoutes = require('./routes/music');
+const authRoutes = require('./routes/auth'); // Import auth routes
 
-// Create an Express application
+// --- Connect to MongoDB ---
+const connectDB = async () => {
+  try {
+    await mongoose.connect(process.env.MONGO_URI);
+    console.log('MongoDB Connected...');
+  } catch (err) {
+    console.error(err.message);
+    process.exit(1); // Exit process with failure
+  }
+};
+connectDB();
+
 const app = express();
+app.use(cors());
+app.use(express.json());
 
-// Use middleware
-app.use(cors()); // Enable Cross-Origin Resource Sharing
-app.use(express.json()); // Allow the server to parse JSON in request bodies
-
-// --- Use our new routes under the /api path ---
+// --- Use Routes ---
 app.use('/api', musicRoutes);
+app.use('/api/auth', authRoutes); // Use auth routes
 
-
-// Define a simple root route for testing
-app.get('/', (req, res) => {
-  res.json({ message: 'Welcome to the SyncStream backend!' });
-});
-
-// Get the port from environment variables or use a default
 const PORT = process.env.PORT || 5001;
-
-// Start the server and listen for incoming requests
-app.listen(PORT, () => {
-  console.log(`Server is listening on port ${PORT}`);
-});
+app.listen(PORT, () => console.log(`Server is listening on port ${PORT}`));
