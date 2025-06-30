@@ -1,49 +1,53 @@
-import React, { createContext, useState, useContext } from 'react';
+import React, { createContext, useState, useContext, useCallback, useMemo } from 'react'; // THE FIX IS HERE
 
 export const PlayerContext = createContext(null);
 
 export const PlayerProvider = ({ children }) => {
-  const [queue, setQueue] = useState([]);
-  const [currentSongIndex, setCurrentSongIndex] = useState(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [volume, setVolume] = useState(0.75); // NEW: Add volume state (0 to 1), default to 75%
+  const [playerState, setPlayerState] = useState({
+    queue: [],
+    currentSongIndex: null,
+    isPlaying: false,
+    progress: 0,
+    duration: 0,
+    volume: 0.75,
+  });
+  
+  const [room, setRoom] = useState({ roomId: null, hostId: null });
+  const currentSong = playerState.currentSongIndex !== null ? playerState.queue[playerState.currentSongIndex] : null;
 
-  const currentSong = currentSongIndex !== null ? queue[currentSongIndex] : null;
+  const loadQueue = useCallback((songs, startIndex = 0) => {
+    setPlayerState(prev => ({ ...prev, queue: songs, currentSongIndex: startIndex, isPlaying: true, progress: 0 }));
+  }, []);
 
-  const loadQueue = (songs, startIndex = 0) => {
-    setQueue(songs);
-    setCurrentSongIndex(startIndex);
-    setIsPlaying(true);
-  };
+  const syncState = useCallback((newState) => setPlayerState(newState), []);
+  const setIsPlaying = useCallback((playing) => setPlayerState(prev => ({ ...prev, isPlaying: playing })), []);
+  const setVolume = useCallback((newVolume) => setPlayerState(prev => ({ ...prev, volume: newVolume })), []);
 
-  const playNext = () => {
-    if (currentSongIndex < queue.length - 1) {
-      setCurrentSongIndex(currentSongIndex + 1);
-      setIsPlaying(true);
-    } else {
-      setIsPlaying(false);
-    }
-  };
+  const playNext = useCallback(() => {
+    setPlayerState(prev => {
+      if (prev.currentSongIndex < prev.queue.length - 1) {
+        return { ...prev, currentSongIndex: prev.currentSongIndex + 1, progress: 0, isPlaying: true };
+      }
+      return { ...prev, isPlaying: false };
+    });
+  }, []);
 
-  const playPrev = () => {
-    if (currentSongIndex > 0) {
-      setCurrentSongIndex(currentSongIndex - 1);
-      setIsPlaying(true);
-    }
-  };
+  const playPrev = useCallback(() => {
+    setPlayerState(prev => {
+      if (prev.currentSongIndex > 0) {
+        return { ...prev, currentSongIndex: prev.currentSongIndex - 1, progress: 0, isPlaying: true };
+      }
+      return prev;
+    });
+  }, []);
 
-  const contextValue = {
-    queue,
-    currentSongIndex,
-    currentSong,
-    isPlaying,
-    setIsPlaying,
-    volume,       // NEW: Provide volume state
-    setVolume,    // NEW: Provide function to update volume
-    loadQueue,
-    playNext,
-    playPrev,
-  };
+  const enterRoom = useCallback((roomId, hostId) => setRoom({ roomId, hostId }), []);
+  const leaveRoom = useCallback(() => setRoom({ roomId: null, hostId: null }), []);
+
+  const contextValue = useMemo(() => ({
+    playerState, setPlayerState, currentSong, room,
+    loadQueue, syncState, setIsPlaying, playNext, playPrev, setVolume, enterRoom, leaveRoom,
+  }), [playerState, room, loadQueue, syncState, setIsPlaying, playNext, playPrev, setVolume, enterRoom, leaveRoom]);
 
   return (
     <PlayerContext.Provider value={contextValue}>

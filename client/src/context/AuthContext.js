@@ -5,61 +5,59 @@ export const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(localStorage.getItem('authToken'));
-  const [user, setUser] = useState(null); // NEW: State for user object
+  const [user, setUser] = useState(null);
   const [likedSongs, setLikedSongs] = useState(new Set());
 
   const api = useMemo(() => {
     const instance = axios.create({ baseURL: 'http://localhost:5001/api' });
     instance.interceptors.request.use((config) => {
       const currentToken = localStorage.getItem('authToken');
-      if (currentToken) {
-        config.headers['Authorization'] = `Bearer ${currentToken}`;
-      }
+      if (currentToken) config.headers['Authorization'] = `Bearer ${currentToken}`;
       return config;
     });
     return instance;
   }, []);
 
+  const logout = useCallback(() => {
+    setUser(null);
+    setToken(null);
+    setLikedSongs(new Set());
+    localStorage.removeItem('authToken');
+  }, []);
+
   const fetchUserData = useCallback(async () => {
+    if (!token) {
+        setUser(null);
+        setLikedSongs(new Set());
+        return;
+    }
     try {
       const { data } = await api.get('/auth/me');
       setUser(data);
-      const likedIds = new Set(data.likedSongs.map(song => song.videoId));
-      setLikedSongs(likedIds);
+      setLikedSongs(new Set(data.likedSongs.map(song => song.videoId)));
     } catch (error) {
-      console.error('Failed to fetch user data', error);
-      logout(); // Logout if token is invalid
+      console.error('Failed to fetch user data, logging out.', error);
+      logout();
     }
-  }, [api]);
+  }, [token, api, logout]);
 
   useEffect(() => {
-    if (token) {
-      fetchUserData();
-    } else {
-      setUser(null);
-      setLikedSongs(new Set());
-    }
+    fetchUserData();
   }, [token, fetchUserData]);
 
-  const login = (newToken) => {
+  const login = useCallback((newToken) => {
     setToken(newToken);
     localStorage.setItem('authToken', newToken);
-  };
+  }, []);
 
-  const logout = () => {
-    setUser(null);
-    setToken(null);
-    localStorage.removeItem('authToken');
-  };
-  
-  const addLikedSong = async (song) => {
+  const addLikedSong = useCallback(async (song) => {
     try {
       await api.post('/user/liked-songs', song);
       setLikedSongs(prev => new Set(prev).add(song.videoId || song.id));
     } catch (error) { console.error('Failed to like song', error); }
-  };
+  }, [api]);
 
-  const removeLikedSong = async (videoId) => {
+  const removeLikedSong = useCallback(async (videoId) => {
     try {
       await api.delete(`/user/liked-songs/${videoId}`);
       setLikedSongs(prev => {
@@ -68,19 +66,12 @@ export const AuthProvider = ({ children }) => {
         return newSet;
       });
     } catch (error) { console.error('Failed to unlike song', error); }
-  };
+  }, [api]);
 
-
-  const contextValue = {
-    token,
-    user, // NEW: Provide user object
-    login,
-    logout,
-    isAuthenticated: !!token,
-    likedSongs,
-    addLikedSong,
-    removeLikedSong,
-  };
+  const contextValue = useMemo(() => ({
+    token, user, isAuthenticated: !!token, likedSongs,
+    login, logout, addLikedSong, removeLikedSong,
+  }), [token, user, likedSongs, login, logout, addLikedSong, removeLikedSong]);
 
   return (
     <AuthContext.Provider value={contextValue}>

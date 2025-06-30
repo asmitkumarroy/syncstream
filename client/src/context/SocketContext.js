@@ -11,13 +11,15 @@ export const SocketProvider = ({ children }) => {
     const [socket, setSocket] = useState(null);
 
     useEffect(() => {
-        // Establish connection when the provider mounts
+        // This effect runs only once when the application loads.
+        // It establishes the connection to our back-end server.
         const newSocket = io('http://localhost:5001');
         setSocket(newSocket);
 
-        // Disconnect when the provider unmounts
+        // This is a cleanup function. It ensures that when the app is closed,
+        // the socket connection is properly terminated.
         return () => newSocket.close();
-    }, []);
+    }, []); // The empty dependency array ensures this runs only once.
 
     return (
         <SocketContext.Provider value={socket}>
