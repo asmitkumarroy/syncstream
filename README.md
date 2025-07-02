@@ -2,7 +2,6 @@
 
 SyncStream is a feature-rich, Spotify-inspired music streaming web application built with the **MERN stack**. Its core feature is the ability to create real-time "Listening Parties," allowing users to listen to music and chat together in perfect synchronization, no matter where they are.
 
-*(**Note**: You should replace the URL above with a link to your own screenshot or a GIF of the app in action\!)*
 
 -----
 
