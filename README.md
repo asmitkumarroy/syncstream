@@ -1,10 +1,3 @@
-# syncstream
-Of course. A good project needs good documentation. Here is a comprehensive `README.md` file that you can put on your GitHub repository. It covers the project's purpose, features, technology stack, and instructions on how to run it locally.
-
-You can copy and paste the entire text below into a new file named `README.md` in the root of your `syncstream` project folder.
-
------
-
 # SyncStream - Real-time Social Music Player 🎵
 
 SyncStream is a feature-rich, Spotify-inspired music streaming web application built with the **MERN stack**. Its core feature is the ability to create real-time "Listening Parties," allowing users to listen to music and chat together in perfect synchronization, no matter where they are.
