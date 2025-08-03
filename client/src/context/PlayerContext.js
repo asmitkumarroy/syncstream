@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useCallback, useMemo } from 'react'; // THE FIX IS HERE
+import React, { createContext, useState, useContext, useCallback, useMemo } from 'react';
 
 export const PlayerContext = createContext(null);
 
@@ -9,7 +9,7 @@ export const PlayerProvider = ({ children }) => {
     isPlaying: false,
     progress: 0,
     duration: 0,
-    volume: 0.75,
+    // volume is no longer here
   });
   
   const [room, setRoom] = useState({ roomId: null, hostId: null });
@@ -21,7 +21,6 @@ export const PlayerProvider = ({ children }) => {
 
   const syncState = useCallback((newState) => setPlayerState(newState), []);
   const setIsPlaying = useCallback((playing) => setPlayerState(prev => ({ ...prev, isPlaying: playing })), []);
-  const setVolume = useCallback((newVolume) => setPlayerState(prev => ({ ...prev, volume: newVolume })), []);
 
   const playNext = useCallback(() => {
     setPlayerState(prev => {
@@ -46,8 +45,9 @@ export const PlayerProvider = ({ children }) => {
 
   const contextValue = useMemo(() => ({
     playerState, setPlayerState, currentSong, room,
-    loadQueue, syncState, setIsPlaying, playNext, playPrev, setVolume, enterRoom, leaveRoom,
-  }), [playerState, room, loadQueue, syncState, setIsPlaying, playNext, playPrev, setVolume, enterRoom, leaveRoom]);
+    loadQueue, syncState, setIsPlaying, playNext, playPrev, enterRoom, leaveRoom,
+    // setVolume is no longer here
+  }), [playerState, room, loadQueue, syncState, setIsPlaying, playNext, playPrev, enterRoom, leaveRoom, currentSong]);
 
   return (
     <PlayerContext.Provider value={contextValue}>

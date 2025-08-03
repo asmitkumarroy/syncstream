@@ -1,37 +1,47 @@
-import React, { useRef, useEffect, useContext } from 'react';
+import React, { useRef, useEffect, useState, useContext } from 'react';
+import { useLocation, useParams } from 'react-router-dom';
 import { usePlayer } from '../context/PlayerContext';
 import { useSocket } from '../context/SocketContext';
 import { AuthContext } from '../context/AuthContext';
 import { PlayIcon, PauseIcon, NextIcon, PrevIcon, VolumeIcon, HeartIcon, HeartFilledIcon } from '../icons';
 
 const Player = () => {
-  const { playerState, setPlayerState, currentSong, syncState, setIsPlaying, playNext, playPrev, setVolume, room } = usePlayer();
-  const { isPlaying, queue, currentSongIndex, progress, duration, volume } = playerState;
+  console.log('Player component rendered');
+  // Get global state, but not volume
+  const { playerState, setPlayerState, currentSong, syncState, setIsPlaying, playNext, playPrev, room } = usePlayer();
+  console.log('Current song:', currentSong);
+  console.log('Player state:', playerState);
+  const { isPlaying, progress, duration } = playerState;
+
+  // NEW: Volume is now a local state within the Player component itself
+  const [volume, setVolume] = useState(0.75);
+
   const { likedSongs, addLikedSong, removeLikedSong } = useContext(AuthContext);
   const audioRef = useRef(null);
   const socket = useSocket();
+  const location = useLocation();
+  const params = useParams();
 
-  // THE FIX: isHost is now determined by global state, not the URL
+  const playerStateRef = useRef(playerState);
+  useEffect(() => { playerStateRef.current = playerState; }, [playerState]);
+
+  const inRoom = location.pathname.includes('/room/');
+  const roomId = inRoom ? params.id : null;
   const isHost = socket?.id === room.hostId;
-  const inRoom = !!room.roomId;
 
-  // This effect now correctly sends updates from the host, no matter what page they are on
+  // This effect no longer sends volume in the playerState
   useEffect(() => {
     if (isHost && inRoom && socket) {
-      socket.emit('player_state_change', { roomId: room.roomId, state: playerState });
+      socket.emit('player_state_change', { roomId, state: playerState });
     }
-  }, [playerState, isHost, inRoom, room.roomId, socket]);
-  
-  // This effect correctly listens for events
+  }, [playerState, isHost, inRoom, roomId, socket]);
+
+  // This effect listens for events (no changes here)
   useEffect(() => {
     if (socket) {
-      const handleSync = (state) => {
-        if (!isHost) syncState(state);
-      };
+      const handleSync = (state) => { if (!isHost) syncState(state); };
       const handleGetState = (targetSocketId) => {
-        if (isHost) {
-          socket.emit('send_player_state_to_new_user', { state: playerState, targetSocketId });
-        }
+        if (isHost) socket.emit('send_player_state_to_new_user', { state: playerStateRef.current, targetSocketId });
       };
       socket.on('sync_player_state', handleSync);
       socket.on('get_current_player_state', handleGetState);
@@ -40,20 +50,24 @@ const Player = () => {
         socket.off('get_current_player_state', handleGetState);
       };
     }
-  }, [socket, isHost, playerState, syncState]);
+  }, [socket, isHost, syncState]);
 
   // This effect controls the audio element
   useEffect(() => {
     if (audioRef.current) {
       if (isPlaying) audioRef.current.play().catch(e => {});
       else audioRef.current.pause();
+      
+      // Volume is now set from the local state, which every user controls individually
       audioRef.current.volume = volume;
+
       if (!isHost && inRoom && Math.abs(audioRef.current.currentTime - progress) > 2) {
         audioRef.current.currentTime = progress;
       }
     }
   }, [isPlaying, currentSong, volume, progress, isHost, inRoom]);
-  
+
+  // ... (handlers are mostly the same)
   const handleTimeUpdate = () => { if (isHost || !inRoom) setPlayerState(prev => ({...prev, progress: audioRef.current?.currentTime || 0})); };
   const handleLoadedMetadata = () => { if (isHost || !inRoom) setPlayerState(prev => ({...prev, duration: audioRef.current?.duration || 0})); };
   const handleSeek = (e) => {
@@ -61,8 +75,6 @@ const Player = () => {
     if (audioRef.current) audioRef.current.currentTime = newProgress;
     if (isHost || !inRoom) setPlayerState(prev => ({ ...prev, progress: newProgress }));
   };
-
-  // ... (like button logic and formatTime are unchanged)
   const isCurrentSongLiked = currentSong ? likedSongs.has(currentSong.videoId || currentSong.id) : false;
   const handleLikeClick = () => {
     if (!currentSong) return;
@@ -90,36 +102,52 @@ const Player = () => {
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleLoadedMetadata}
         onEnded={isHost || !inRoom ? playNext : undefined}
-        onPlay={() => { if(isHost || !inRoom) setIsPlaying(true); }}
-        onPause={() => { if(isHost || !inRoom) setIsPlaying(false); }}
       />
       <footer className="player-footer">
-        {/* The JSX for the footer is unchanged */}
         <div className="song-info">
-          <img src={currentSong.thumbnail} alt={currentSong.title} />
-          <div className="title-wrapper"><p className="title">{currentSong.title}</p></div>
+          <img src={currentSong.thumbnail} alt={currentSong.title} className="song-thumbnail" />
+          <div className="song-details">
+            <span className="song-title">{currentSong.title}</span>
+          </div>
           <button onClick={handleLikeClick} className="control-button like-button">
             {isCurrentSongLiked ? <HeartFilledIcon /> : <HeartIcon />}
           </button>
         </div>
         <div className="player-center">
-          <div className="control-buttons">
-            <button onClick={playPrev} disabled={(!isHost && inRoom) || currentSongIndex === 0}><PrevIcon /></button>
-            <button onClick={() => setIsPlaying(!isPlaying)} className="play-pause-btn" disabled={!isHost && inRoom}>
+          <div className="player-controls">
+            <button onClick={playPrev} disabled={inRoom && !isHost} className="control-button"><PrevIcon /></button>
+            <button onClick={() => setIsPlaying(!isPlaying)} disabled={inRoom && !isHost} className="control-button play-button">
               {isPlaying ? <PauseIcon /> : <PlayIcon />}
             </button>
-            <button onClick={playNext} disabled={(!isHost && inRoom) || !queue || currentSongIndex === queue.length - 1}><NextIcon /></button>
+            <button onClick={playNext} disabled={inRoom && !isHost} className="control-button"><NextIcon /></button>
           </div>
-          <div className="seek-bar-container">
+          <div className="progress-container">
             <span>{formatTime(progress)}</span>
-            <input type="range" min="0" max={duration || 0} value={progress} onChange={handleSeek} className="seek-bar" disabled={!isHost && inRoom} />
-            <span>{formatTime(duration || 0)}</span>
+            <input
+              type="range"
+              min="0"
+              max={duration || 0}
+              value={progress}
+              onChange={handleSeek}
+              disabled={inRoom && !isHost}
+              className="progress-bar"
+            />
+            <span>{formatTime(duration)}</span>
           </div>
         </div>
         <div className="player-right">
           <div className="volume-container">
-            <button className="control-button"><VolumeIcon /></button>
-            <input type="range" min="0" max="1" step="0.01" value={volume} onChange={(e) => setVolume(parseFloat(e.target.value))} className="volume-slider"/>
+            <button className="control-button" /* No longer disabled */><VolumeIcon /></button>
+            <input 
+              type="range" 
+              min="0" 
+              max="1" 
+              step="0.01" 
+              value={volume}
+              onChange={(e) => setVolume(parseFloat(e.target.value))}
+              className="volume-slider"
+              // THE FIX: The disabled prop is REMOVED so everyone can control it
+            />
           </div>
         </div>
       </footer>

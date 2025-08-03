@@ -1,1 +1,13 @@
-{}
+{
+  "name": "syncstream",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "client",
+    "backend"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=backend",
+    "start": "npm start --workspace=client"
+  }
+}
