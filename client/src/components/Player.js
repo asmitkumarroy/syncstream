@@ -3,40 +3,32 @@ import { useLocation, useParams } from 'react-router-dom';
 import { usePlayer } from '../context/PlayerContext';
 import { useSocket } from '../context/SocketContext';
 import { AuthContext } from '../context/AuthContext';
-import { PlayIcon, PauseIcon, NextIcon, PrevIcon, VolumeIcon, HeartIcon, HeartFilledIcon } from '../icons';
+import { PlayIcon, PauseIcon, NextIcon, PrevIcon, VolumeIcon, HeartIcon, HeartFilledIcon, ShuffleIcon, RepeatIcon } from '../icons';
+import Tooltip from './Tooltip';
 
 const Player = () => {
-  console.log('Player component rendered');
-  // Get global state, but not volume
-  const { playerState, setPlayerState, currentSong, syncState, setIsPlaying, playNext, playPrev, room } = usePlayer();
-  console.log('Current song:', currentSong);
-  console.log('Player state:', playerState);
-  const { isPlaying, progress, duration } = playerState;
-
-  // NEW: Volume is now a local state within the Player component itself
+  const { playerState, setPlayerState, currentSong, syncState, setIsPlaying, playNext, playPrev, room, toggleShuffle, toggleRepeat } = usePlayer();
+  const { isPlaying, progress, duration, shuffle, repeat } = playerState;
   const [volume, setVolume] = useState(0.75);
-
   const { likedSongs, addLikedSong, removeLikedSong } = useContext(AuthContext);
   const audioRef = useRef(null);
   const socket = useSocket();
   const location = useLocation();
   const params = useParams();
-
   const playerStateRef = useRef(playerState);
+
   useEffect(() => { playerStateRef.current = playerState; }, [playerState]);
 
   const inRoom = location.pathname.includes('/room/');
   const roomId = inRoom ? params.id : null;
   const isHost = socket?.id === room.hostId;
 
-  // This effect no longer sends volume in the playerState
   useEffect(() => {
     if (isHost && inRoom && socket) {
       socket.emit('player_state_change', { roomId, state: playerState });
     }
   }, [playerState, isHost, inRoom, roomId, socket]);
 
-  // This effect listens for events (no changes here)
   useEffect(() => {
     if (socket) {
       const handleSync = (state) => { if (!isHost) syncState(state); };
@@ -52,22 +44,17 @@ const Player = () => {
     }
   }, [socket, isHost, syncState]);
 
-  // This effect controls the audio element
   useEffect(() => {
     if (audioRef.current) {
       if (isPlaying) audioRef.current.play().catch(e => {});
       else audioRef.current.pause();
-      
-      // Volume is now set from the local state, which every user controls individually
       audioRef.current.volume = volume;
-
       if (!isHost && inRoom && Math.abs(audioRef.current.currentTime - progress) > 2) {
         audioRef.current.currentTime = progress;
       }
     }
   }, [isPlaying, currentSong, volume, progress, isHost, inRoom]);
 
-  // ... (handlers are mostly the same)
   const handleTimeUpdate = () => { if (isHost || !inRoom) setPlayerState(prev => ({...prev, progress: audioRef.current?.currentTime || 0})); };
   const handleLoadedMetadata = () => { if (isHost || !inRoom) setPlayerState(prev => ({...prev, duration: audioRef.current?.duration || 0})); };
   const handleSeek = (e) => {
@@ -103,26 +90,42 @@ const Player = () => {
         onLoadedMetadata={handleLoadedMetadata}
         onEnded={isHost || !inRoom ? playNext : undefined}
       />
-      <footer className="player-footer">
+      <footer className="player-footer" data-testid="now-playing-bar">
         <div className="song-info">
           <img src={currentSong.thumbnail} alt={currentSong.title} className="song-thumbnail" />
           <div className="song-details">
             <span className="song-title">{currentSong.title}</span>
+            <span className="song-artist">{currentSong.artist || 'Unknown Artist'}</span>
           </div>
-          <button onClick={handleLikeClick} className="control-button like-button">
-            {isCurrentSongLiked ? <HeartFilledIcon /> : <HeartIcon />}
-          </button>
+          <Tooltip text={isCurrentSongLiked ? 'Remove from Liked Songs' : 'Add to Liked Songs'}>
+            <button onClick={handleLikeClick} className="control-button like-button">
+              {isCurrentSongLiked ? <HeartFilledIcon /> : <HeartIcon />}
+            </button>
+          </Tooltip>
         </div>
+
         <div className="player-center">
           <div className="player-controls">
-            <button onClick={playPrev} disabled={inRoom && !isHost} className="control-button"><PrevIcon /></button>
-            <button onClick={() => setIsPlaying(!isPlaying)} disabled={inRoom && !isHost} className="control-button play-button">
-              {isPlaying ? <PauseIcon /> : <PlayIcon />}
-            </button>
-            <button onClick={playNext} disabled={inRoom && !isHost} className="control-button"><NextIcon /></button>
+            <Tooltip text={shuffle ? 'Disable Shuffle' : 'Enable Shuffle'}>
+              <button onClick={toggleShuffle} className={`control-button ${shuffle ? 'active' : ''}`} disabled={inRoom && !isHost}><ShuffleIcon /></button>
+            </Tooltip>
+            <Tooltip text="Previous">
+              <button onClick={playPrev} disabled={inRoom && !isHost} className="control-button"><PrevIcon /></button>
+            </Tooltip>
+            <Tooltip text={isPlaying ? 'Pause' : 'Play'}>
+              <button onClick={() => setIsPlaying(!isPlaying)} disabled={inRoom && !isHost} className="control-button play-button">
+                {isPlaying ? <PauseIcon /> : <PlayIcon />}
+              </button>
+            </Tooltip>
+            <Tooltip text="Next">
+              <button onClick={playNext} disabled={inRoom && !isHost} className="control-button"><NextIcon /></button>
+            </Tooltip>
+            <Tooltip text={repeat ? 'Disable Repeat' : 'Enable Repeat'}>
+              <button onClick={toggleRepeat} className={`control-button ${repeat ? 'active' : ''}`} disabled={inRoom && !isHost}><RepeatIcon /></button>
+            </Tooltip>
           </div>
           <div className="progress-container">
-            <span>{formatTime(progress)}</span>
+            <span className="progress-time">{formatTime(progress)}</span>
             <input
               type="range"
               min="0"
@@ -131,22 +134,39 @@ const Player = () => {
               onChange={handleSeek}
               disabled={inRoom && !isHost}
               className="progress-bar"
+              style={{ '--progress-percentage': `${(progress / duration) * 100 || 0}%` }}
             />
-            <span>{formatTime(duration)}</span>
+            <span className="progress-time">{formatTime(duration)}</span>
           </div>
         </div>
+
         <div className="player-right">
+          <Tooltip text="Lyrics">
+            <button className="control-button">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M13.426 2.574a.75.75 0 0 0-1.06 1.06L13.94 5.21a4.999 4.999 0 0 1-1.79 8.012.75.75 0 1 0 .848 1.204A6.5 6.5 0 0 0 15.44 5.77L16 5.21a.75.75 0 0 0-1.06-1.06l-.514.524zM8 12a3.5 3.5 0 0 0 3.5-3.5V4a3.5 3.5 0 0 0-7 0v4.5A3.5 3.5 0 0 0 8 12zm2-3.5a2 2 0 0 1-4 0V4a2 2 0 0 1 4 0v4.5z"></path></svg>
+            </button>
+          </Tooltip>
+          <Tooltip text="Queue">
+            <button className="control-button">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M15 15H1v-1.5h14V15zm0-4.5H1V9h14v1.5zm-14-7A.5.5 0 0 1 .5 3h15a.5.5 0 0 1 0 1H.5a.5.5 0 0 1-.5-.5z"></path></svg>
+            </button>
+          </Tooltip>
+          <Tooltip text="Devices">
+            <button className="control-button">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M12.5 4H3.5A2.5 2.5 0 0 0 1 6.5v6A2.5 2.5 0 0 0 3.5 15h9a2.5 2.5 0 0 0 2.5-2.5v-6A2.5 2.5 0 0 0 12.5 4zM3.5 13.5a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-9z"></path><path d="M12 1H4a1 1 0 0 0-1 1v1.5h10V2a1 1 0 0 0-1-1z"></path></svg>
+            </button>
+          </Tooltip>
           <div className="volume-container">
-            <button className="control-button" /* No longer disabled */><VolumeIcon /></button>
-            <input 
-              type="range" 
-              min="0" 
-              max="1" 
-              step="0.01" 
+            <button className="control-button"><VolumeIcon /></button>
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.01"
               value={volume}
               onChange={(e) => setVolume(parseFloat(e.target.value))}
               className="volume-slider"
-              // THE FIX: The disabled prop is REMOVED so everyone can control it
+              style={{ '--volume-percentage': `${volume * 100}%` }}
             />
           </div>
         </div>

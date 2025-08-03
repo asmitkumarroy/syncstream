@@ -9,6 +9,8 @@ export const PlayerProvider = ({ children }) => {
     isPlaying: false,
     progress: 0,
     duration: 0,
+    shuffle: false,
+    repeat: false,
     // volume is no longer here
   });
   
@@ -24,6 +26,13 @@ export const PlayerProvider = ({ children }) => {
 
   const playNext = useCallback(() => {
     setPlayerState(prev => {
+      if (prev.repeat) {
+        return { ...prev, progress: 0, isPlaying: true };
+      }
+      if (prev.shuffle) {
+        const nextIndex = Math.floor(Math.random() * prev.queue.length);
+        return { ...prev, currentSongIndex: nextIndex, progress: 0, isPlaying: true };
+      }
       if (prev.currentSongIndex < prev.queue.length - 1) {
         return { ...prev, currentSongIndex: prev.currentSongIndex + 1, progress: 0, isPlaying: true };
       }
@@ -43,11 +52,15 @@ export const PlayerProvider = ({ children }) => {
   const enterRoom = useCallback((roomId, hostId) => setRoom({ roomId, hostId }), []);
   const leaveRoom = useCallback(() => setRoom({ roomId: null, hostId: null }), []);
 
+  const toggleShuffle = useCallback(() => setPlayerState(prev => ({ ...prev, shuffle: !prev.shuffle })), []);
+  const toggleRepeat = useCallback(() => setPlayerState(prev => ({ ...prev, repeat: !prev.repeat })), []);
+
   const contextValue = useMemo(() => ({
     playerState, setPlayerState, currentSong, room,
     loadQueue, syncState, setIsPlaying, playNext, playPrev, enterRoom, leaveRoom,
+    toggleShuffle, toggleRepeat,
     // setVolume is no longer here
-  }), [playerState, room, loadQueue, syncState, setIsPlaying, playNext, playPrev, enterRoom, leaveRoom, currentSong]);
+  }), [playerState, room, loadQueue, syncState, setIsPlaying, playNext, playPrev, enterRoom, leaveRoom, currentSong, toggleShuffle, toggleRepeat]);
 
   return (
     <PlayerContext.Provider value={contextValue}>
